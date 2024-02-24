@@ -1,0 +1,31 @@
+package com.example.jobstats.data
+
+import kotlinx.coroutines.flow.Flow
+import com.example.jobstats.data.model.InvoiceApiModel
+import com.example.jobstats.data.model.JobApiModel
+import com.example.jobstats.data.remote.datasourceimpl.jobstatsdashboard.JobDataSourceImpl
+
+class DataRepository(private val apiDataSource: JobDataSourceImpl) {
+
+    /**
+     * This API returns jobs in realtime using which stats can be computed
+     */
+    fun observeJobs(): Flow<List<JobApiModel>> {
+        return apiDataSource.observeJobs()
+    }
+
+    /**
+     * This API returns invoices in realtime using which stats can be computed
+     */
+    fun observeInvoices(): Flow<List<InvoiceApiModel>> {
+        return apiDataSource.observeInvoices()
+    }
+
+    /**
+     * This API returns random jobs every time invoked
+     */
+    fun getJobs(): List<JobApiModel> {
+        // TODO - Update as per listing page expectations
+        return listOf()
+    }
+}
