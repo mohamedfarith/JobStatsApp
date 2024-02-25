@@ -35,9 +35,10 @@ import com.example.jobstats.ui.theme.Typography
 
 @Composable
 fun InvoiceStatCard(
-    invoiceList: List<Helper.InvoiceItemUiDto>,
+    list: List<Helper.InvoiceItemUiDto>,
     invoiceStatCardClicked: () -> Unit
 ) {
+    val invoiceList = list.sortedByDescending { it.total }
     val totalValue = invoiceList.sumOf { it.total }
     val totalCollected =
         invoiceList.filter { it.jobName == InvoiceStatus.Paid.name }.sumOf { it.total }

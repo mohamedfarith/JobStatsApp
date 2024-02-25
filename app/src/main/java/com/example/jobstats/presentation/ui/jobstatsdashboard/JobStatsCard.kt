@@ -29,18 +29,20 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.jobstats.AppConstants
 import com.example.jobstats.Helper
+import com.example.jobstats.snakeCaseToSentenceWord
 import com.example.jobstats.ui.theme.Typography
 
 @Composable
 fun JobStatsCard(
     totalJobCount: Int,
     totalCompleted: Int,
-    enumList: List<Helper.JobUiState>,
-    jobCardClicked: () -> Unit
+    list: List<Helper.JobUiState>,
+    jobCardClicked: (List<Helper.JobUiState>) -> Unit
 ) {
+    val sortedList = list.sortedByDescending { it.jobList.size }
     Surface(modifier = Modifier
         .padding(horizontal = 10.dp)
-        .clickable { jobCardClicked() }) {
+        .clickable { jobCardClicked(list) }) {
         Column(
             modifier = Modifier
                 .background(color = Color.White)
@@ -59,10 +61,10 @@ fun JobStatsCard(
                 totalCompleted = totalCompleted.toString()
             )
             Column(modifier = Modifier.padding(15.dp)) {
-                JobStatComponent(enumList)
+                JobStatComponent(sortedList)
                 Spacer(modifier = Modifier.height(20.dp))
 
-                JobSplitComponent(enumList = enumList)
+                JobSplitComponent(enumList = sortedList)
             }
         }
 
@@ -133,7 +135,7 @@ fun JobSplitComponent(enumList: List<Helper.JobUiState>) {
                 )
                 Spacer(modifier = Modifier.width(10.dp))
                 Text(
-                    text = "${state.jobName} (${state.jobList.size})",
+                    text = "${state.jobName.snakeCaseToSentenceWord()} (${state.jobList.size})",
                     style = Typography.bodySmall, color = Color.Gray
                 )
             }

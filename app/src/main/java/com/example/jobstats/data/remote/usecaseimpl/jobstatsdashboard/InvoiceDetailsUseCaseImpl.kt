@@ -9,11 +9,10 @@ import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 class InvoiceDetailsUseCaseImpl @Inject constructor(
-    private val dispatcher: CustomDispatcher,
     private val repository: DashboardRepository
 ) :
     InvoiceDetailsUseCase {
-    override suspend fun getInvoiceList(): Flow<List<InvoiceApiModel>> {
+    override suspend fun getInvoiceList(dispatcher: CustomDispatcher): Flow<List<InvoiceApiModel>> {
         return withContext(dispatcher.default) {
             repository.getInvoiceDetails()
         }
