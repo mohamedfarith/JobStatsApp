@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -44,6 +45,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.example.jobstats.Helper
+import com.example.jobstats.snakeCaseToSentenceWord
 import com.example.jobstats.data.model.JobStatus
 import com.example.jobstats.toUiDataDto
 import com.example.jobstats.ui.theme.Typography
@@ -55,6 +57,7 @@ fun JobDescriptionScreen(
 ) {
     val dashTitle = "Jobs(${totalJobCount})"
     val navController = rememberNavController()
+    val sortedList = enumList.sortedByDescending { it.jobList.size }
     val backPressedDispatcher = LocalOnBackPressedDispatcherOwner.current?.onBackPressedDispatcher
     Scaffold(topBar = {
         JobDescriptionAppBar(title = dashTitle) {
@@ -74,15 +77,24 @@ fun JobDescriptionScreen(
             Spacer(modifier = Modifier.height(5.dp))
             JobStatComponent(
                 modifier = Modifier.padding(horizontal = 20.dp),
-                enumList = enumList
+                enumList = sortedList
             )
             Spacer(modifier = Modifier.height(25.dp))
             Divider(modifier = Modifier.height(1.dp), color = Color.LightGray)
-            HorizontalTabs(jobList = enumList, navController = navController)
-            NavHost(navController = navController, startDestination = enumList[0].jobName) {
-                enumList.forEach { state ->
-                    composable(route = state.jobName) {
-                        ItemContent(state = state)
+            HorizontalTabs(jobList = sortedList, navController = navController)
+            NavHost(navController = navController, startDestination = JobStatus.YetToStart.name) {
+                JobStatus.entries.forEach { state ->
+                    composable(route = state.name) {
+                        val content = sortedList.firstOrNull { item -> item.jobName == state.name }
+                        if (content != null)
+                            ItemContent(state = content)
+                        else
+                            Box(
+                                modifier = Modifier.fillMaxSize(),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(text = "No jobs in ${state.name} state")
+                            }
                     }
                 }
             }
@@ -136,11 +148,11 @@ fun HorizontalTabs(jobList: List<Helper.JobUiState>, navController: NavControlle
     val entry by navController.currentBackStackEntryAsState()
     val currentTab = entry?.destination?.route
     ScrollableTabRow(selectedTabIndex = selectedTabIndex.intValue, edgePadding = 5.dp) {
-        jobList.forEachIndexed { index, value ->
-            Tab(selected = currentTab == value.jobName, onClick = {
-                if (currentTab != value.jobName) {
+        JobStatus.entries.forEachIndexed { index, jobStatus ->
+            Tab(selected = currentTab == jobStatus.name, onClick = {
+                if (currentTab != jobStatus.name) {
                     selectedTabIndex.intValue = index
-                    navController.navigate(value.jobName) {
+                    navController.navigate(jobStatus.name) {
                         popUpTo(entry?.destination?.route ?: JobStatus.YetToStart.name) {
                             inclusive = true
                         }
@@ -151,7 +163,7 @@ fun HorizontalTabs(jobList: List<Helper.JobUiState>, navController: NavControlle
             }) {
                 Text(
                     modifier = Modifier.padding(15.dp),
-                    text = "${value.jobName} (${value.jobList.size})",
+                    text = "${jobStatus.name.snakeCaseToSentenceWord()} (${jobList.firstOrNull { jobStatus.name == it.jobName }?.jobList?.size ?: 0})",
                     style = Typography.bodySmall,
                     fontWeight = FontWeight.Medium,
                     color = if (selectedTabIndex.intValue == index) Color.Black else Color.Gray

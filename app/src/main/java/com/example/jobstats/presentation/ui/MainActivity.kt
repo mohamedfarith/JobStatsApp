@@ -20,6 +20,7 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.example.jobstats.Helper
 import com.example.jobstats.R
 import com.example.jobstats.data.model.JobStatus
@@ -39,29 +40,6 @@ class MainActivity : ComponentActivity() {
         setContent {
             val controller = rememberNavController()
             dashVM = hiltViewModel()
-            val jobData = dashVM.jobList.collectAsState()
-            val jobsList = Helper.getEnumMappedJobList(jobData.value)
-            val invoiceData = dashVM.invoiceList.collectAsState()
-            val invoiceList = Helper.getEnumMappedInvoiceList(invoiceData.value)
-            val totalCompleted =
-                jobsList.firstOrNull() { it.jobName == JobStatus.Completed.name }?.jobList?.size
-                    ?: -1
-            val lifecycleOwner = LocalLifecycleOwner.current.lifecycle
-            val latestEvent = remember {
-                mutableStateOf(Lifecycle.Event.ON_ANY)
-            }
-            DisposableEffect(lifecycleOwner) {
-                val lifecycleObserver =
-                    LifecycleEventObserver { _, event -> latestEvent.value = event }
-                lifecycleOwner.addObserver(lifecycleObserver)
-                onDispose { lifecycleOwner.removeObserver(lifecycleObserver) }
-            }
-            LaunchedEffect(key1 = Unit) {
-                if (latestEvent.value == Lifecycle.Event.ON_RESUME) {
-                    dashVM.getJobsData()
-                    dashVM.getInvoiceList()
-                }
-            }
 
             NavHost(
                 navController = controller,
@@ -70,22 +48,25 @@ class MainActivity : ComponentActivity() {
                 composable(JobDashBoardRoute.JOB_DASHBOARD) {
 
                     JobDashboardScreen(
-                        jobList = jobsList,
+                        dashVM = dashVM,
                         jobStatsCardClicked = {
+                            controller.currentBackStackEntry?.savedStateHandle?.set("jobList", it)
                             controller.navigate(route = JobDashBoardRoute.JOB_DESCRIPTION)
                         },
-                        invoiceList = invoiceList,
-                        totalJobCount = jobData.value.size,
-                        totalCompleted = totalCompleted,
                         invoiceStatCardClicked = {
                             // no action as of now
                         })
                 }
                 composable(JobDashBoardRoute.JOB_DESCRIPTION) {
+                    val list =
+                        controller.previousBackStackEntry?.savedStateHandle?.get<List<Helper.JobUiState>>(
+                            "jobList"
+                        )
                     JobDescriptionScreen(
-                        totalCompleted = totalCompleted,
-                        totalJobCount = jobData.value.size,
-                        enumList = jobsList
+                        totalCompleted = list?.firstOrNull { it.jobName == JobStatus.Completed.name }?.jobList?.size
+                            ?: 0,
+                        totalJobCount = list?.sumOf { it.jobList.size } ?: 0,
+                        enumList = list ?: emptyList()
                     )
                 }
             }

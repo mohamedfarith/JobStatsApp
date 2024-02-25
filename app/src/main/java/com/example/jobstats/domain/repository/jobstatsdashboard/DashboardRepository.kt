@@ -2,6 +2,7 @@ package com.example.jobstats.domain.repository.jobstatsdashboard
 
 import com.example.jobstats.data.model.InvoiceApiModel
 import com.example.jobstats.data.model.JobApiModel
+import com.example.jobstats.domain.CustomDispatcher
 import kotlinx.coroutines.flow.Flow
 
 interface DashboardRepository {

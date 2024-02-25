@@ -36,9 +36,7 @@ class JobDataSourceImpl @Inject constructor() : JobDataSource {
     }
 
     override suspend fun getJobDetails(): Flow<List<JobApiModel>> {
-        return flow {
-            emit(SampleData.generateRandomJobList(20))
-        }
+       return observeJobs()
     }
 
     override suspend fun getInvoiceDetails(): Flow<List<InvoiceApiModel>> {

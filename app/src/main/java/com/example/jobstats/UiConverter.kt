@@ -12,7 +12,12 @@ fun JobApiModel.toUiDataDto(): JobApiModelUiDto {
     return JobApiModelUiDto(
         jobNumber = "#${this.jobNumber.nonNullString()}",
         title = this.title,
-        duration = Helper.getDurationFormattedDate(this.startTime, this.endTime)
+        duration = Helper.getDurationFormattedDate(
+            fromFormat = AppConstants.ISO_TIME_FORMAT,
+            toFormat = AppConstants.TIME_FORMAT,
+            this.startTime,
+            this.endTime
+        )
     )
 }
 

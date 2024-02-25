@@ -14,10 +14,9 @@ import javax.inject.Inject
  */
 
 class JobDetailsUseCaseImpl @Inject constructor(
-    private val dispatcher: CustomDispatcher,
     private val repository: DashboardRepository
 ) : JobDetailsUseCase {
-    override suspend fun fetchDashBoardDetails(): Flow<List<JobApiModel>> {
+    override suspend fun fetchDashBoardDetails(dispatcher:CustomDispatcher): Flow<List<JobApiModel>> {
         return withContext(dispatcher.default) {
             repository.getDashboardDetails()
         }

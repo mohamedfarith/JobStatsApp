@@ -11,6 +11,7 @@ import com.example.jobstats.ui.theme.StatPurple
 import com.example.jobstats.ui.theme.StatYellow
 import com.example.jobstats.ui.theme.StateRed
 import java.text.SimpleDateFormat
+import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.Calendar
 
@@ -70,8 +71,9 @@ object Helper {
         return mList
     }
 
-    private fun getDateSuffix(date: Int): String {
-        return when (date) {
+    fun getDateSuffix(date: Int): String {
+        return if (date < 0) return ""
+        else when (date) {
             1, 21, 31 -> "" + date + "st"
             2, 22 -> "" + date + "nd"
             3, 23 -> "" + date + "rd"
@@ -79,25 +81,33 @@ object Helper {
         }
     }
 
-    fun getCurrentFormattedDate(): String {
-        val mCalendar = Calendar.getInstance()
-        val dateSuffix = getDateSuffix(mCalendar.get(Calendar.DATE))
+    fun getCurrentFormattedDate(
+        date: Int = Calendar.getInstance().get(Calendar.DATE),
+        pattern: String = AppConstants.WELCOME_FORMAT_DATE
+    ): String {
+        val dateSuffix = getDateSuffix(date)
         return try {
-            SimpleDateFormat("EEEE '$dateSuffix' MMMM yyyy").format(mCalendar.time)
+            DateTimeFormatter.ofPattern(pattern.replace("{ddd}", "'${dateSuffix}'"))
+                .format(LocalDateTime.now())
         } catch (e: Exception) {
             ""
         }
     }
 
-    fun getDurationFormattedDate(startTime: String, endTime: String): String {
+    fun getDurationFormattedDate(
+        fromFormat: String,
+        toFormat: String,
+        startTime: String,
+        endTime: String
+    ): String {
         return try {
             val start = startTime.let {
-                val temp = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'").parse(it)
+                val temp = DateTimeFormatter.ofPattern(fromFormat).parse(it)
                 DateTimeFormatter.ofPattern("hh:mm a").format(temp)
             }
             val end = endTime.let {
-                val temp = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'").parse(it)
-                DateTimeFormatter.ofPattern("hh:mm a").format(temp)
+                val temp = DateTimeFormatter.ofPattern(fromFormat).parse(it)
+                DateTimeFormatter.ofPattern(toFormat).format(temp)
             }
             "$start - $end"
         } catch (e: java.lang.Exception) {
@@ -108,12 +118,13 @@ object Helper {
 
 }
 
-//fun String.makeItSentenceCase(){
-//    val size  = this.length
-//    val subStriing = arrayOf<String>()
-//    for(i in 0..<size){
-//       if(this[i].isUpperCase()){
-//           subStriing
-//       }
-//    }
-//}
+fun String.snakeCaseToSentenceWord(): String {
+    var ans = ""
+    for (i in indices) {
+        if (this[i].isUpperCase())
+            ans += " " + this[i]
+        else
+            ans += this[i]
+    }
+    return ans.trim()
+}

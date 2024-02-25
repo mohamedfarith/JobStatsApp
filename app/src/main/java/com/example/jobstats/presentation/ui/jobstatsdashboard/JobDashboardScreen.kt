@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -24,15 +23,25 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.jobstats.AppConstants
 import com.example.jobstats.Helper
+import com.example.jobstats.data.model.JobStatus
 import com.example.jobstats.ui.theme.Typography
 
 /*
@@ -41,13 +50,21 @@ import com.example.jobstats.ui.theme.Typography
 */
 @Composable
 fun JobDashboardScreen(
-    jobList: List<Helper.JobUiState>,
-    invoiceList: List<Helper.InvoiceItemUiDto>,
-    totalJobCount: Int,
-    totalCompleted: Int,
-    jobStatsCardClicked: () -> Unit,
+    dashVM:DashBoardViewModel = hiltViewModel(),
+    jobStatsCardClicked: (List<Helper.JobUiState>) -> Unit,
     invoiceStatCardClicked: () -> Unit
 ) {
+    val jobData = dashVM.jobList.collectAsStateWithLifecycle()
+    val jobsList = Helper.getEnumMappedJobList(jobData.value)
+    val invoiceData = dashVM.invoiceList.collectAsStateWithLifecycle()
+    val invoiceList = Helper.getEnumMappedInvoiceList(invoiceData.value)
+    val totalCompleted =
+        jobsList.firstOrNull() { it.jobName == JobStatus.Completed.name }?.jobList?.size
+            ?: -1
+    LaunchedEffect(key1 = Unit) {
+            dashVM.getJobsData()
+            dashVM.getInvoiceList()
+    }
     Scaffold(
         modifier = Modifier
             .fillMaxSize()
@@ -67,9 +84,9 @@ fun JobDashboardScreen(
                 dateString = Helper.getCurrentFormattedDate()
             )
             JobStatsCard(
-                totalJobCount = totalJobCount,
+                totalJobCount = jobData.value.size,
                 totalCompleted = totalCompleted,
-                enumList = jobList,
+                list = jobsList,
                 jobStatsCardClicked
             )
             InvoiceStatCard(invoiceList, invoiceStatCardClicked)
@@ -91,9 +108,12 @@ fun ProfileNameCard(greeting: String, name: String, dateString: String) {
         shape = RoundedCornerShape(5.dp),
         border = BorderStroke(width = 1.dp, color = Color.LightGray)
     ) {
-        Row(modifier = Modifier
-            .background(color = Color.White)
-            .padding(horizontal = 15.dp, vertical = 20.dp), verticalAlignment = Alignment.CenterVertically) {
+        Row(
+            modifier = Modifier
+                .background(color = Color.White)
+                .padding(horizontal = 15.dp, vertical = 20.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
             Column(
                 modifier = Modifier
                     .weight(1f)
@@ -129,21 +149,11 @@ fun DashboardTopAppBar(title: String) {
 
 }
 
-
-@Preview
-@Composable
-fun profileNameCardPreview() {
-    ProfileNameCard(greeting = "", name = "", dateString = "")
-}
-
 @Preview
 @Composable
 fun JobDashboardScreenPreview() {
     JobDashboardScreen(
         jobStatsCardClicked = { },
-        invoiceStatCardClicked = {},
-        jobList = emptyList(),
-        invoiceList = emptyList(), totalCompleted = -1, totalJobCount = 2
-    )
+        invoiceStatCardClicked = {})
 }
 
